@@ -54,7 +54,7 @@ def main():
             for row in rows:
                 row[0] = [int(i) for i in row[0].split("-")] # split the string into day, month, year and convert to integers and keep in the same list
         
-        return game_data
+        return rows
     
     # Output all advanced player season totals for the 2017-2018 season in CSV format to 2018_10_06_BOS_PBP.csv
     def scrape_games(game_data : list) -> list:
@@ -78,4 +78,5 @@ def main():
     game_data = get_game_info(url)      
     scrape_games(game_data)
 
-main()
+if __name__ == "__main__":
+    main()
