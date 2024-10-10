@@ -162,4 +162,7 @@ cython_debug/
 #.idea/
 
 # Play by play files
-./pbp_games
+pbp_games/
+
+# Vscode
+.vscode/
