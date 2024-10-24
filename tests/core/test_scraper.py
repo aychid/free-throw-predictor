@@ -3,8 +3,7 @@ import os
 
 
 class TestScraper:
-    url = "https://www.basketball-reference.com/players/j/jamesle01/gamelog/ \
-        2018/"
+    url = "https://www.basketball-reference.com/players/j/jamesle01/gamelog/2018/"
 
     def test_game_meta_data(self):
         """
