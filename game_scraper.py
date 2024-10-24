@@ -21,7 +21,7 @@ logging.basicConfig(
     style="%",
     level=logging.INFO,
     filemode = 'w',
-    filename="game_scraper.log",
+    filename="script.log",
 )
 
 
