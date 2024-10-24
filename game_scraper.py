@@ -51,12 +51,16 @@ def get_game_info(url: str) -> BeautifulSoup:
     Gets the full page from the URL and returns
     ordered row list with the date, opponent, and home/away status
     """
-    soup = BeautifulSoup(requests.get(url).content,
-                         "html.parser")  # Gets full page and parses it with HTML parser
+
+    response = requests.get(url)
+    if response.status_code == 429:
+        logger.error(f"Too many requests, check URL: {response.url}, Status code: {response.status_code}")
+        requests.exceptions.HTTPError("429 Too Many Requests: Rate limit exceeded")
+    soup = BeautifulSoup(response.content, "html.parser")  # Gets full page and parses it with HTML parser
 
     if soup is None:
-        logger.error("Failed to load page, check URL")
-        raise ValueError("Failed to load page, check URL")
+        logger.error("Failed to load soup, check URL")
+        raise ValueError("Failed to load soup, check URL")
 
     else:
         table = soup.find('table', {'id': 'pgl_basic'})   # Find table by ID
@@ -95,7 +99,7 @@ def scrape_games(game_data: list) -> list:
                   "SAC": Team.SACRAMENTO_KINGS, "SAS": Team.SAN_ANTONIO_SPURS,
                   "TOR": Team.TORONTO_RAPTORS, "UTA": Team.UTAH_JAZZ, "WAS": Team.WASHINGTON_WIZARDS}
 
-    for game in tqdm(game_data, desc="Scraping games"):
+    for game in tqdm(game_data[:5], desc="Scraping games"):
         year, month, day = game[0]
 
         print(f"Writing play-by-play for Cavs game on {year}-{month}-{day} to CSV file")

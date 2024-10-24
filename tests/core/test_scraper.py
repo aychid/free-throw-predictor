@@ -19,7 +19,7 @@ class TestScraper:
         """
         GIVEN list of rows containing date, home/away status, and opponent
         WHEN the get_table_info function is called
-        THEN the function should return 30 csv files containing the play
+        THEN the function should return 82 csv files containing the play
             by play data for each game in the pbp_games folder
         """
         game_scraper.scrape_games(game_scraper.get_game_info(self.url))
@@ -27,5 +27,5 @@ class TestScraper:
                              if os.path.isfile(os.path.join('pbp_games', name))
                              and name.endswith('.csv')])
 
-        assert os.path.exists("pbp_games/2017_10_17_CLE_PBP_HOME.csv"), "Test failed to create CSV file"
-        assert csv_file_count == 30, "Test failed to create 30 CSV files"
+        assert os.path.exists("pbp_games/2017_10_17_CLE_PBP_HOME.csv"), "Test failed to create first CSV file"
+        assert csv_file_count == 82, "Test failed, incorrect number of CSV files in folder"
