@@ -20,7 +20,7 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s: %(message)s",
     style="%",
     level=logging.INFO,
-    filemode = 'w',
+    filemode='w',
     filename="scraper.log",
 )
 
@@ -37,8 +37,8 @@ def get_table_info(rows: list) -> list:
         date = row.find('td', {'data-stat': 'date_game'}).text
         opponent = row.find('td', {'data-stat': 'opp_id'}).text
         # Game_location column has "@" symbol for away games so check in text for "@"
-        home_game = 'Home' if not (row.find('td', {'data-stat': 
-                                                  'game_location'}).text == "@") else 'Away'
+        home_game = 'Home' if not (row.find('td', {'data-stat':
+                                                   'game_location'}).text == "@") else 'Away'
 
         # Append to the list
         game_data.append([date, home_game, opponent])
@@ -95,7 +95,7 @@ def scrape_games(game_data: list) -> list:
                   "SAC": Team.SACRAMENTO_KINGS, "SAS": Team.SAN_ANTONIO_SPURS,
                   "TOR": Team.TORONTO_RAPTORS, "UTA": Team.UTAH_JAZZ, "WAS": Team.WASHINGTON_WIZARDS}
 
-    for game in tqdm(game_data[:5], desc="Scraping games"):
+    for game in tqdm(game_data, desc="Scraping games"):
         year, month, day = game[0]
 
         print(f"Writing play-by-play for Cavs game on {year}-{month}-{day} to CSV file")
