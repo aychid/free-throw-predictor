@@ -8,6 +8,7 @@ Only use once to avoid request limits
 
 # Imports
 import logging
+from tqdm import tqdm
 from basketball_reference_web_scraper import client
 from basketball_reference_web_scraper.data import OutputType, Team
 import requests
@@ -94,7 +95,7 @@ def scrape_games(game_data: list) -> list:
                   "SAC": Team.SACRAMENTO_KINGS, "SAS": Team.SAN_ANTONIO_SPURS,
                   "TOR": Team.TORONTO_RAPTORS, "UTA": Team.UTAH_JAZZ, "WAS": Team.WASHINGTON_WIZARDS}
 
-    for game in game_data[:5]:
+    for game in tqdm(game_data[:5], desc="Scraping games"):
         year, month, day = game[0]
 
         print(f"Writing play-by-play for Cavs game on {year}-{month}-{day} to CSV file")
