@@ -7,10 +7,21 @@ Only use once to avoid request limits
 """
 
 # Imports
+import logging
 from basketball_reference_web_scraper import client
 from basketball_reference_web_scraper.data import OutputType, Team
 import requests
 from bs4 import BeautifulSoup
+
+# Set up logging
+logger = logging.getLogger(__name__)
+logging.basicConfig(
+    format="%(asctime)s - %(levelname)s: %(message)s",
+    style="%",
+    level=logging.INFO,
+    filemode = 'w',
+    filename="game_scraper.log",
+)
 
 
 def get_table_info(rows: list) -> list:
@@ -24,10 +35,9 @@ def get_table_info(rows: list) -> list:
         # Extract the date, opponent, and home/away status
         date = row.find('td', {'data-stat': 'date_game'}).text
         opponent = row.find('td', {'data-stat': 'opp_id'}).text
-        # Game_location column is empty for home games but has "@" symbol for away games,
-        # Check if the field is empty to determine home/away status.
-        home_game = 'Home' if not row.find('td', {'data-stat': 'game_location'}) \
-                    else 'Away'
+        # Game_location column has "@" symbol for away games so check in text for "@"
+        home_game = 'Home' if not (row.find('td', {'data-stat': 
+                                                  'game_location'}).text == "@") else 'Away'
 
         # Append to the list
         game_data.append([date, home_game, opponent])
@@ -44,11 +54,14 @@ def get_game_info(url: str) -> BeautifulSoup:
                          "html.parser")  # Gets full page and parses it with HTML parser
 
     if soup is None:
-        raise Exception("Failed to load page, check URL")
+        logger.error("Failed to load page, check URL")
+        raise ValueError("Failed to load page, check URL")
+
     else:
         table = soup.find('table', {'id': 'pgl_basic'})   # Find table by ID
         if table is None:
-            raise Exception("Table not found, check the page structure or URL")
+            logger.error("Table not found, check the page structure or URL")
+            raise ValueError("Table not found, check the page structure or URL")
         rows = table.find('tbody').find_all('tr')  # Find all rows in the table
 
         rows = get_table_info(rows)
@@ -56,7 +69,6 @@ def get_game_info(url: str) -> BeautifulSoup:
         # Split the string into day, month, year and convert to integers and keep in the same list
         for row in rows:
             row[0] = [int(i) for i in row[0].split("-")]
-
     return rows
 
 
@@ -82,7 +94,7 @@ def scrape_games(game_data: list) -> list:
                   "SAC": Team.SACRAMENTO_KINGS, "SAS": Team.SAN_ANTONIO_SPURS,
                   "TOR": Team.TORONTO_RAPTORS, "UTA": Team.UTAH_JAZZ, "WAS": Team.WASHINGTON_WIZARDS}
 
-    for game in game_data:
+    for game in game_data[:5]:
         year, month, day = game[0]
 
         print(f"Writing play-by-play for Cavs game on {year}-{month}-{day} to CSV file")
@@ -96,9 +108,9 @@ def scrape_games(game_data: list) -> list:
                                     month=month, day=day, output_type=OutputType.CSV,
                                     output_file_path=f"pbp_games/{year}_{month}_{day}_CLE_PBP_AWAY.csv")
             else:
-                print("Error in home/away")
-        except Exception:
-            print("Failed play by play")
+                raise ValueError("Invalid home/away status")
+        except Exception as e:
+            logger.exception(e)
 
 
 def main():
@@ -109,8 +121,8 @@ def main():
 
     url = "https://www.basketball-reference.com/players/j/jamesle01/gamelog/2018/"
 
-    game_data = get_game_info(url)
-    scrape_games(game_data)
+    game_rows = get_game_info(url)
+    scrape_games(game_rows)
 
 
 if __name__ == "__main__":
