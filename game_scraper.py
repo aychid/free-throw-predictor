@@ -13,6 +13,7 @@ from basketball_reference_web_scraper import client
 from basketball_reference_web_scraper.data import OutputType, Team
 import requests
 from bs4 import BeautifulSoup
+import time
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -20,25 +21,28 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s: %(message)s",
     style="%",
     level=logging.INFO,
-    filemode='w',
+    filemode="w",
     filename="scraper.log",
 )
 
 
 def get_table_info(rows: list) -> list:
-    """ Extracts the date, opponent, and home/away status from given rows """
+    """Extracts the date, opponent, and home/away status from given rows"""
 
     game_data = []
     for row in rows:
-        if 'thead' in row.get('class', []):  # Skip header rows
+        if "thead" in row.get("class", []):  # Skip header rows
             continue
 
         # Extract the date, opponent, and home/away status
-        date = row.find('td', {'data-stat': 'date_game'}).text
-        opponent = row.find('td', {'data-stat': 'opp_id'}).text
+        date = row.find("td", {"data-stat": "date_game"}).text
+        opponent = row.find("td", {"data-stat": "opp_id"}).text
         # Game_location column has "@" symbol for away games so check in text for "@"
-        home_game = 'Home' if not (row.find('td', {'data-stat':
-                                                   'game_location'}).text == "@") else 'Away'
+        home_game = (
+            "Home"
+            if not (row.find("td", {"data-stat": "game_location"}).text == "@")
+            else "Away"
+        )
 
         # Append to the list
         game_data.append([date, home_game, opponent])
@@ -54,20 +58,24 @@ def get_game_info(url: str) -> BeautifulSoup:
 
     response = requests.get(url)
     if response.status_code == 429:
-        logger.error(f"Too many requests, check URL: {response.url}, Status code: {response.status_code}")
+        logger.error(
+            f"Too many requests, check URL: {response.url}, Status code: {response.status_code}"
+        )
         requests.exceptions.HTTPError("429 Too Many Requests: Rate limit exceeded")
-    soup = BeautifulSoup(response.content, "html.parser")  # Gets full page and parses it with HTML parser
 
+    soup = BeautifulSoup(
+        response.content, "html.parser"
+    )  # Gets full page and parses it with HTML parser
     if soup is None:
         logger.error("Failed to load soup, check URL")
         raise ValueError("Failed to load soup, check URL")
 
     else:
-        table = soup.find('table', {'id': 'pgl_basic'})   # Find table by ID
+        table = soup.find("table", {"id": "pgl_basic"})  # Find table by ID
         if table is None:
             logger.error("Table not found, check the page structure or URL")
             raise ValueError("Table not found, check the page structure or URL")
-        rows = table.find('tbody').find_all('tr')  # Find all rows in the table
+        rows = table.find("tbody").find_all("tr")  # Find all rows in the table
 
         rows = get_table_info(rows)
 
@@ -86,32 +94,65 @@ def scrape_games(game_data: list) -> list:
     """
 
     # Dictionary of team names from bball reference to the web scraper API team names
-    dict_teams = {"ATL": Team.ATLANTA_HAWKS, "BOS": Team.BOSTON_CELTICS, "BRK": Team.BROOKLYN_NETS,
-                  "CHI": Team.CHICAGO_BULLS, "CHO": Team.CHARLOTTE_HORNETS,
-                  "CLE": Team.CLEVELAND_CAVALIERS, "DAL": Team.DALLAS_MAVERICKS, "DEN": Team.DENVER_NUGGETS,
-                  "DET": Team.DETROIT_PISTONS, "GSW": Team.GOLDEN_STATE_WARRIORS, "HOU": Team.HOUSTON_ROCKETS,
-                  "IND": Team.INDIANA_PACERS, "LAC": Team.LOS_ANGELES_CLIPPERS, "LAL": Team.LOS_ANGELES_LAKERS,
-                  "MEM": Team.MEMPHIS_GRIZZLIES, "MIA": Team.MIAMI_HEAT, "MIL": Team.MILWAUKEE_BUCKS,
-                  "MIN": Team.MINNESOTA_TIMBERWOLVES, "NOP": Team.NEW_ORLEANS_PELICANS,
-                  "NYK": Team.NEW_YORK_KNICKS, "OKC": Team.OKLAHOMA_CITY_THUNDER,
-                  "ORL": Team.ORLANDO_MAGIC, "PHI": Team.PHILADELPHIA_76ERS,
-                  "PHO": Team.PHOENIX_SUNS, "POR": Team.PORTLAND_TRAIL_BLAZERS,
-                  "SAC": Team.SACRAMENTO_KINGS, "SAS": Team.SAN_ANTONIO_SPURS,
-                  "TOR": Team.TORONTO_RAPTORS, "UTA": Team.UTAH_JAZZ, "WAS": Team.WASHINGTON_WIZARDS}
+    dict_teams = {
+        "ATL": Team.ATLANTA_HAWKS,
+        "BOS": Team.BOSTON_CELTICS,
+        "BRK": Team.BROOKLYN_NETS,
+        "CHI": Team.CHICAGO_BULLS,
+        "CHO": Team.CHARLOTTE_HORNETS,
+        "CLE": Team.CLEVELAND_CAVALIERS,
+        "DAL": Team.DALLAS_MAVERICKS,
+        "DEN": Team.DENVER_NUGGETS,
+        "DET": Team.DETROIT_PISTONS,
+        "GSW": Team.GOLDEN_STATE_WARRIORS,
+        "HOU": Team.HOUSTON_ROCKETS,
+        "IND": Team.INDIANA_PACERS,
+        "LAC": Team.LOS_ANGELES_CLIPPERS,
+        "LAL": Team.LOS_ANGELES_LAKERS,
+        "MEM": Team.MEMPHIS_GRIZZLIES,
+        "MIA": Team.MIAMI_HEAT,
+        "MIL": Team.MILWAUKEE_BUCKS,
+        "MIN": Team.MINNESOTA_TIMBERWOLVES,
+        "NOP": Team.NEW_ORLEANS_PELICANS,
+        "NYK": Team.NEW_YORK_KNICKS,
+        "OKC": Team.OKLAHOMA_CITY_THUNDER,
+        "ORL": Team.ORLANDO_MAGIC,
+        "PHI": Team.PHILADELPHIA_76ERS,
+        "PHO": Team.PHOENIX_SUNS,
+        "POR": Team.PORTLAND_TRAIL_BLAZERS,
+        "SAC": Team.SACRAMENTO_KINGS,
+        "SAS": Team.SAN_ANTONIO_SPURS,
+        "TOR": Team.TORONTO_RAPTORS,
+        "UTA": Team.UTAH_JAZZ,
+        "WAS": Team.WASHINGTON_WIZARDS,
+    }
 
-    for game in tqdm(game_data[:5], desc="Scraping games"):
+    for game in tqdm(game_data, desc="Scraping games"):
         year, month, day = game[0]
+
+        # Sleep for 15 seconds to avoid rate limits
+        time.sleep(15)
 
         print(f"Writing play-by-play for Cavs game on {year}-{month}-{day} to CSV file")
         try:  # Stores all PBP as CSV's in folder pbp_games
             if game[1] == "Home":
-                client.play_by_play(home_team=Team.CLEVELAND_CAVALIERS, year=year,
-                                    month=month, day=day, output_type=OutputType.CSV,
-                                    output_file_path=f"pbp_games/{year}_{month}_{day}_CLE_PBP_HOME.csv")
+                client.play_by_play(
+                    home_team=Team.CLEVELAND_CAVALIERS,
+                    year=year,
+                    month=month,
+                    day=day,
+                    output_type=OutputType.CSV,
+                    output_file_path=f"pbp_games/{year}_{month}_{day}_CLE_PBP_HOME.csv",
+                )
             elif game[1] == "Away":
-                client.play_by_play(home_team=dict_teams[game[2]], year=year,
-                                    month=month, day=day, output_type=OutputType.CSV,
-                                    output_file_path=f"pbp_games/{year}_{month}_{day}_CLE_PBP_AWAY.csv")
+                client.play_by_play(
+                    home_team=dict_teams[game[2]],
+                    year=year,
+                    month=month,
+                    day=day,
+                    output_type=OutputType.CSV,
+                    output_file_path=f"pbp_games/{year}_{month}_{day}_CLE_PBP_AWAY.csv",
+                )
             else:
                 raise ValueError("Invalid home/away status")
         except Exception as e:
