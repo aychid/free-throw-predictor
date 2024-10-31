@@ -86,11 +86,14 @@ def get_game_info(url: str) -> BeautifulSoup:
 
 
 # Output all advanced player season totals for the 2017-2018 season in CSV format to 2018_10_06_BOS_PBP.csv
-def scrape_games(game_data: list) -> list:
+def scrape_games(game_data: list, num_games: int | str, scrape_interval: int) -> None:
     """
     Scrapes the play by play data for each game in the game_data list
     with the format [[year, month, day], home/away, opponent]
     and stores it in a CSV file in the pbp_games folder
+
+    Parameters:
+
     """
 
     # Dictionary of team names from bball reference to the web scraper API team names
@@ -127,11 +130,18 @@ def scrape_games(game_data: list) -> list:
         "WAS": Team.WASHINGTON_WIZARDS,
     }
 
+    if num_games == "all":
+        game_data = game_data
+    elif isinstance(num_games, int) and num_games <= 82:
+        game_data = game_data[:num_games]
+    else:
+        raise ValueError("Number of games must be an integer and <= 82 or 'all'")
+
     for game in tqdm(game_data, desc="Scraping games"):
         year, month, day = game[0]
 
-        # Sleep for 15 seconds to avoid rate limits
-        time.sleep(15)
+        # Sleep for scrape_interval seconds to avoid rate limiting
+        time.sleep(scrape_interval)
 
         print(f"Writing play-by-play for Cavs game on {year}-{month}-{day} to CSV file")
         try:  # Stores all PBP as CSV's in folder pbp_games
@@ -165,10 +175,10 @@ def main():
     and stores the play by play data in CSV files
     """
 
-    url = "https://www.basketball-reference.com/players/j/jamesle01/gamelog/2018/"
+    URL = "https://www.basketball-reference.com/players/j/jamesle01/gamelog/2018/"
 
-    game_rows = get_game_info(url)
-    scrape_games(game_rows)
+    game_rows = get_game_info(URL)
+    scrape_games(game_data=game_rows, num_games=2, scrape_interval=15)
 
 
 if __name__ == "__main__":
