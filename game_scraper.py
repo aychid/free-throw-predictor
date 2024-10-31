@@ -13,7 +13,9 @@ from basketball_reference_web_scraper import client
 from basketball_reference_web_scraper.data import OutputType, Team
 import requests
 from bs4 import BeautifulSoup
+from bs4.element import ResultSet
 import time
+from typing import List, Optional
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -25,11 +27,21 @@ logging.basicConfig(
     filename="scraper.log",
 )
 
+# Typing
+GameData = List[List[int] | str]
+GamesInSeason = List[GameData]
 
-def get_table_info(rows: list) -> list:
-    """Extracts the date, opponent, and home/away status from given rows"""
+
+def get_table_info(rows: ResultSet) -> List[List[str]]:
+    """
+    Extracts the date, opponent, and home/away status from given rows
+
+    Parameters: rows (ResultSet): A list of rows obtained from scraping player page gametable
+
+    """
 
     game_data = []
+
     for row in rows:
         if "thead" in row.get("class", []):  # Skip header rows
             continue
@@ -46,14 +58,15 @@ def get_table_info(rows: list) -> list:
 
         # Append to the list
         game_data.append([date, home_game, opponent])
-
     return game_data
 
 
-def get_game_info(url: str) -> BeautifulSoup:
+def get_game_info(url: str) -> GamesInSeason:
     """
     Gets the full page from the URL and returns
     ordered row list with the date, opponent, and home/away status
+
+    Parameters: url (str): URL of the player page including the season to scrape
     """
 
     response = requests.get(url)
@@ -82,17 +95,24 @@ def get_game_info(url: str) -> BeautifulSoup:
         # Split the string into day, month, year and convert to integers and keep in the same list
         for row in rows:
             row[0] = [int(i) for i in row[0].split("-")]
+
     return rows
 
 
 # Output all advanced player season totals for the 2017-2018 season in CSV format to 2018_10_06_BOS_PBP.csv
-def scrape_games(game_data: list, num_games: int | str, scrape_interval: int) -> None:
+def scrape_games(
+    game_data: GamesInSeason,
+    num_games: Optional[int] = None,
+    scrape_interval: int = 15,
+) -> None:
     """
     Scrapes the play by play data for each game in the game_data list
     with the format [[year, month, day], home/away, opponent]
     and stores it in a CSV file in the pbp_games folder
 
-    Parameters:
+    Parameters: game_data (List[str]): A list of game metadata to scrape on.
+                num_games (Optional[int]): Number of games to scrape. If None, scrapes all games.
+                scrape_interval (int): Time in seconds to sleep between scraping games.
 
     """
 
@@ -130,14 +150,12 @@ def scrape_games(game_data: list, num_games: int | str, scrape_interval: int) ->
         "WAS": Team.WASHINGTON_WIZARDS,
     }
 
-    if num_games == "all":
-        game_data = game_data
-    elif isinstance(num_games, int) and num_games <= 82:
-        game_data = game_data[:num_games]
-    else:
-        raise ValueError("Number of games must be an integer and <= 82 or 'all'")
+    if num_games is not None and not isinstance(num_games, int):
+        raise ValueError("Number of games must be an integer or default value None")
 
-    for game in tqdm(game_data, desc="Scraping games"):
+    games_to_scrape = game_data if game_data is None else game_data[:num_games]
+
+    for game in tqdm(games_to_scrape, desc="Scraping games"):
         year, month, day = game[0]
 
         # Sleep for scrape_interval seconds to avoid rate limiting
