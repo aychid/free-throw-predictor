@@ -14,8 +14,9 @@ from basketball_reference_web_scraper.data import OutputType, Team
 import requests
 from bs4 import BeautifulSoup
 from bs4.element import ResultSet
-import time
 from typing import List, Optional
+import time
+import pathlib
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -154,6 +155,9 @@ def scrape_games(
         raise ValueError("Number of games must be an integer or default value None")
 
     games_to_scrape = game_data if game_data is None else game_data[:num_games]
+
+    # Create a folder to store the play by play data
+    pathlib.Path("pbp_games").mkdir(parents=True, exist_ok=True)
 
     for game in tqdm(games_to_scrape, desc="Scraping games"):
         year, month, day = game[0]
