@@ -12,6 +12,7 @@ dependencies:
   - tqdm
   - pytest
   - pytest-cov
+  - pip=24.2
   - pip:
     - basketball-reference-web-scraper==4.14.0
 
