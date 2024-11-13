@@ -1,8 +1,9 @@
 name: bball
 channels:
-  - conda-forge
-  - defaults
+  - https://repo.anaconda.com/pkgs/main
+  - https://repo.anaconda.com/pkgs/r
 dependencies:
+<<<<<<< HEAD
   - _openmp_mutex=4.5
   - asttokens=2.4.1
   - brotli=1.1.0
@@ -165,3 +166,18 @@ dependencies:
     - urllib3==2.2.2
     - watchdog==6.0.0
 prefix: C:\Users\aydin\anaconda3\envs\bball
+=======
+  - beautifulsoup4
+  - ipywidgets
+  - matplotlib
+  - python=3.12
+  - requests
+  - seaborn
+  - tqdm
+  - pytest
+  - pytest-cov
+  - pip:
+    - basketball-reference-web-scraper==4.14.0
+
+prefix: /home/aychid/miniconda3/envs/bball
+>>>>>>> 2fdeb27 (chore: update environment to be both linux and windows compatible by removing OS dependencies)
